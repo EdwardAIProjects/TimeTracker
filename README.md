@@ -53,8 +53,9 @@ http://localhost:4173/
 Build and run:
 
 ```sh
+mkdir -p data
 docker build -t time-tracker .
-docker run --rm -p 4173:4173 -v time-tracker-data:/app/data time-tracker
+docker run --rm -p 4173:4173 -v ./data:/app/data time-tracker
 ```
 
 Or use the compose example:
@@ -62,3 +63,5 @@ Or use the compose example:
 ```sh
 docker compose -f compose.example.yml up --build
 ```
+
+Server state is stored in `data/state.json` and persisted with the local `./data` bind mount.
