@@ -121,7 +121,6 @@ function getEventEnd(value: string): Date {
 }
 
 function getProgress(dates: EventDates, now: Date) {
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const start = parseLocalDate(dates.startDate);
   const end = getEventEnd(dates.endDate);
   const displayEnd = parseLocalDate(dates.endDate);
@@ -129,18 +128,18 @@ function getProgress(dates: EventDates, now: Date) {
   const elapsedMs = clamp(now.getTime() - start.getTime(), 0, totalMs);
   const remainingMs = clamp(end.getTime() - now.getTime(), 0, totalMs);
   const totalDays = Math.max(differenceInDays(start, end), 1);
-  const elapsedDays = clamp(differenceInDays(start, today), 0, totalDays);
   const daysLeft = Math.ceil(remainingMs / (1000 * 60 * 60 * 24));
+  const hoursLeft = Math.ceil(remainingMs / (1000 * 60 * 60));
   const percent = clamp((elapsedMs / totalMs) * 100, 0, 100);
 
   return {
-    today,
     start,
     end: displayEnd,
     totalDays,
     totalWeeks: totalDays / 7,
-    elapsedDays,
+    totalHours: totalDays * 24,
     daysLeft,
+    hoursLeft,
     weeksLeft: daysLeft / 7,
     percent
   };
@@ -495,13 +494,6 @@ export default function App() {
         <div className="metric-grid">
           <article className="metric-card">
             <strong className="stat-value">
-              <span>{progress.daysLeft}</span>
-              <small>/ {progress.totalDays}</small>
-            </strong>
-            <span className="metric-label">Days left</span>
-          </article>
-          <article className="metric-card">
-            <strong className="stat-value">
               <span>{numberFormatter.format(progress.weeksLeft)}</span>
               <small>/ {numberFormatter.format(progress.totalWeeks)}</small>
             </strong>
@@ -509,10 +501,17 @@ export default function App() {
           </article>
           <article className="metric-card">
             <strong className="stat-value">
-              <span>{progress.elapsedDays}</span>
+              <span>{progress.daysLeft}</span>
               <small>/ {progress.totalDays}</small>
             </strong>
-            <span className="metric-label">Days done</span>
+            <span className="metric-label">Days left</span>
+          </article>
+          <article className="metric-card">
+            <strong className="stat-value">
+              <span>{progress.hoursLeft}</span>
+              <small>/ {progress.totalHours}</small>
+            </strong>
+            <span className="metric-label">Hours left</span>
           </article>
         </div>
       </section>
