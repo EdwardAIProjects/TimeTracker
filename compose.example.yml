@@ -1,0 +1,11 @@
+services:
+  time-tracker:
+    build: .
+    ports:
+      - "4173:4173"
+    volumes:
+      - time-tracker-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  time-tracker-data:
