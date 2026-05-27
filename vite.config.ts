@@ -180,6 +180,25 @@ function stateApiPlugin(): Plugin {
   };
 }
 
+function getPreviewAllowedHosts(): true | string[] | undefined {
+  const value = process.env.PREVIEW_ALLOWED_HOSTS?.trim();
+  if (!value) {
+    return undefined;
+  }
+
+  if (value === "*") {
+    return true;
+  }
+
+  return value
+    .split(",")
+    .map((host) => host.trim())
+    .filter(Boolean);
+}
+
 export default defineConfig({
+  preview: {
+    allowedHosts: getPreviewAllowedHosts()
+  },
   plugins: [react(), stateApiPlugin()]
 });

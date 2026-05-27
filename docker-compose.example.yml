@@ -3,6 +3,8 @@ services:
     build: .
     ports:
       - "4173:4173"
+    environment:
+      PREVIEW_ALLOWED_HOSTS: ${PREVIEW_ALLOWED_HOSTS:-}
     volumes:
       - ./data:/app/data
     restart: unless-stopped
