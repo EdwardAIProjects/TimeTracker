@@ -103,11 +103,6 @@ function parseLocalDate(value: string): Date {
   return new Date(year, month - 1, day);
 }
 
-function getToday(): Date {
-  const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
-}
-
 function differenceInDays(from: Date, to: Date): number {
   const msPerDay = 1000 * 60 * 60 * 24;
   const start = Date.UTC(from.getFullYear(), from.getMonth(), from.getDate());
@@ -119,19 +114,29 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
 
-function getProgress(dates: EventDates) {
-  const today = getToday();
+function getEventEnd(value: string): Date {
+  const end = parseLocalDate(value);
+  end.setDate(end.getDate() + 1);
+  return end;
+}
+
+function getProgress(dates: EventDates, now: Date) {
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const start = parseLocalDate(dates.startDate);
-  const end = parseLocalDate(dates.endDate);
+  const end = getEventEnd(dates.endDate);
+  const displayEnd = parseLocalDate(dates.endDate);
+  const totalMs = Math.max(end.getTime() - start.getTime(), 1);
+  const elapsedMs = clamp(now.getTime() - start.getTime(), 0, totalMs);
+  const remainingMs = clamp(end.getTime() - now.getTime(), 0, totalMs);
   const totalDays = Math.max(differenceInDays(start, end), 1);
   const elapsedDays = clamp(differenceInDays(start, today), 0, totalDays);
-  const daysLeft = clamp(differenceInDays(today, end), 0, totalDays);
-  const percent = clamp((elapsedDays / totalDays) * 100, 0, 100);
+  const daysLeft = Math.ceil(remainingMs / (1000 * 60 * 60 * 24));
+  const percent = clamp((elapsedMs / totalMs) * 100, 0, 100);
 
   return {
     today,
     start,
-    end,
+    end: displayEnd,
     totalDays,
     totalWeeks: totalDays / 7,
     elapsedDays,
@@ -150,13 +155,14 @@ export default function App() {
     accentColor: DEFAULT_STATE.accentColor,
     ...DEFAULT_STATE.dates
   });
+  const [now, setNow] = useState(() => new Date());
   const [isLoadingState, setIsLoadingState] = useState(true);
   const [stateError, setStateError] = useState<string | null>(null);
 
   const { accentColor, dates, eventName, todos } = trackerState;
   const isInitialLoading = isLoadingState && !stateError;
 
-  const progress = useMemo(() => getProgress(dates), [dates]);
+  const progress = useMemo(() => getProgress(dates, now), [dates, now]);
   const completedCount = todos.filter((todo) => todo.done).length;
   const todoPercent =
     todos.length === 0 ? 0 : (completedCount / todos.length) * 100;
@@ -207,6 +213,14 @@ export default function App() {
     return () => {
       isMounted = false;
     };
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setNow(new Date());
+    }, 60_000);
+
+    return () => window.clearInterval(timer);
   }, []);
 
   async function saveTrackerState(nextState: TrackerState) {
