@@ -2,6 +2,8 @@
 
 A small personal progress tracker.
 
+![TimeTracker Demo Screenshot](demo.png)
+
 ## Features
 
 - Tracks percent complete, days left, weeks left, and days done
