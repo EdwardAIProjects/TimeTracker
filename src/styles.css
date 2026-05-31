@@ -1,14 +1,37 @@
 :root {
-  color: #17150d;
-  background: #fffdf4;
+  color: var(--text-color);
+  background: var(--page-bg);
   --label-size: 1.5rem;
   --accent-color: #f4b400;
+  --page-bg: #fffdf4;
+  --surface-bg: #fffdf4;
+  --text-color: #17150d;
+  --inverse-text-color: #fffdf4;
+  --border-color: #17150d;
+  --primary-button-bg: #17150d;
+  --primary-button-text: #fffdf4;
+  --focus-ring: rgba(23, 21, 13, 0.22);
+  --danger-color: #a42323;
+  color-scheme: light;
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+}
+
+:root[data-theme="dark"] {
+  --page-bg: #20201c;
+  --surface-bg: #282821;
+  --text-color: #ebe3cc;
+  --inverse-text-color: #20201c;
+  --border-color: #c7bea5;
+  --primary-button-bg: #e8dfc7;
+  --primary-button-text: #20201c;
+  --focus-ring: rgba(199, 190, 165, 0.24);
+  --danger-color: #dc7d7d;
+  color-scheme: dark;
 }
 
 * {
@@ -19,7 +42,7 @@ body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
-  background: #fffdf4;
+  background: var(--page-bg);
   font-size: 17px;
 }
 
@@ -37,7 +60,7 @@ button {
 
 button:focus-visible,
 input:focus-visible {
-  outline: 3px solid rgba(23, 21, 13, 0.22);
+  outline: 3px solid var(--focus-ring);
   outline-offset: 2px;
 }
 
@@ -58,7 +81,7 @@ input:focus-visible {
 .eyebrow,
 .metric-label {
   margin: 0;
-  color: #17150d;
+  color: var(--text-color);
   font-size: var(--label-size);
   font-weight: 800;
   line-height: 1.15;
@@ -78,7 +101,7 @@ h2 {
 
 h1 {
   display: inline-block;
-  color: #17150d;
+  color: var(--text-color);
   font-size: clamp(1.65rem, 4.4vw, 2.9rem);
   line-height: 1;
   border-bottom: 6px solid var(--accent-color);
@@ -86,16 +109,16 @@ h1 {
 }
 
 h2 {
-  color: #17150d;
+  color: var(--text-color);
   font-size: clamp(1.2rem, 3vw, 1.55rem);
 }
 
 .settings-button {
   display: inline-block;
-  border: 2px solid #17150d;
+  border: 2px solid var(--border-color);
   border-radius: 2px;
-  background: #17150d;
-  color: #fffdf4;
+  background: var(--primary-button-bg);
+  color: var(--primary-button-text);
   padding: 9px 14px;
   font-weight: 800;
   cursor: pointer;
@@ -109,19 +132,59 @@ h2 {
 }
 
 .secondary-top-button {
-  border: 2px solid #17150d;
-  background: #fffdf4;
-  color: #17150d;
+  border: 2px solid var(--border-color);
+  background: var(--surface-bg);
+  color: var(--text-color);
   padding: 9px 14px;
   font-weight: 800;
 }
 
+.theme-toggle {
+  display: inline-grid;
+  place-items: center;
+  width: 46px;
+  min-width: 46px;
+  padding: 0;
+}
+
+.theme-toggle svg {
+  display: block;
+  color: currentColor;
+}
+
+.theme-choice {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.theme-choice button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 2px solid var(--border-color);
+  background: var(--surface-bg);
+  color: var(--text-color);
+  padding: 9px 12px;
+  font-weight: 800;
+}
+
+.theme-choice button.active {
+  background: var(--primary-button-bg);
+  color: var(--primary-button-text);
+}
+
+.theme-choice svg {
+  flex: 0 0 auto;
+}
+
 .state-banner {
   margin: 0 0 18px;
-  border: 2px solid #17150d;
+  border: 2px solid var(--border-color);
   border-radius: 2px;
-  background: #fffdf4;
-  color: #17150d;
+  background: var(--surface-bg);
+  color: var(--text-color);
   padding: 10px 12px;
   font-weight: 800;
 }
@@ -130,7 +193,7 @@ h2 {
   min-height: calc(100svh - 80px);
   display: grid;
   place-items: center;
-  color: #17150d;
+  color: var(--text-color);
   font-weight: 800;
 }
 
@@ -139,7 +202,7 @@ h2 {
   inset: 0;
   z-index: 10;
   overflow: auto;
-  background: #fffdf4;
+  background: var(--page-bg);
 }
 
 .auth-modal {
@@ -147,7 +210,7 @@ h2 {
   inset: 0;
   z-index: 20;
   overflow: auto;
-  background: #fffdf4;
+  background: var(--page-bg);
 }
 
 .settings-dialog {
@@ -183,7 +246,7 @@ h2 {
 }
 
 .settings-field span {
-  color: #17150d;
+  color: var(--text-color);
   font-size: var(--label-size);
   font-weight: 800;
   line-height: 1.15;
@@ -199,9 +262,9 @@ h2 {
 .settings-actions button,
 .close-button {
   min-width: 92px;
-  border: 2px solid #17150d;
-  background: #17150d;
-  color: #fffdf4;
+  border: 2px solid var(--border-color);
+  background: var(--primary-button-bg);
+  color: var(--primary-button-text);
   font-weight: 800;
 }
 
@@ -212,15 +275,15 @@ h2 {
 
 .settings-actions .secondary-button,
 .close-button {
-  background: #fffdf4;
-  color: #17150d;
+  background: var(--surface-bg);
+  color: var(--text-color);
 }
 
 .settings-actions .danger-button {
   margin-right: auto;
-  border-color: #a42323;
-  background: #a42323;
-  color: #fffdf4;
+  border-color: var(--danger-color);
+  background: var(--danger-color);
+  color: var(--inverse-text-color);
 }
 
 .close-button {
@@ -245,7 +308,7 @@ h2 {
   display: grid;
   place-items: center;
   min-height: 48px;
-  border: 2px solid #17150d;
+  border: 2px solid var(--border-color);
   border-radius: 2px;
   background: var(--accent-color);
   cursor: pointer;
@@ -272,9 +335,9 @@ h2 {
   gap: 12px;
   margin-top: 10px;
   padding: 14px;
-  border: 2px solid #17150d;
+  border: 2px solid var(--border-color);
   border-radius: 2px;
-  background: #fffdf4;
+  background: var(--surface-bg);
   text-align: left;
 }
 
@@ -291,7 +354,7 @@ h2 {
 }
 
 .date-grid label span {
-  color: #17150d;
+  color: var(--text-color);
   font-size: 0.96rem;
   font-weight: 700;
 }
@@ -299,23 +362,23 @@ h2 {
 input {
   width: 100%;
   min-height: 44px;
-  border: 2px solid #17150d;
+  border: 2px solid var(--border-color);
   border-radius: 2px;
-  background: #fffdf4;
-  color: #17150d;
+  background: var(--surface-bg);
+  color: var(--text-color);
   padding: 0 12px;
 }
 
 .date-warning {
   margin: 0;
-  color: #17150d;
+  color: var(--text-color);
   font-size: 1rem;
   font-weight: 700;
 }
 
 .login-error {
   margin: 0;
-  color: #a42323;
+  color: var(--danger-color);
   font-size: 1rem;
   font-weight: 800;
 }
@@ -340,7 +403,7 @@ input {
   display: flex;
   align-items: baseline;
   justify-content: center;
-  color: #17150d;
+  color: var(--text-color);
   line-height: 0.9;
   white-space: nowrap;
 }
@@ -355,7 +418,7 @@ input {
 }
 
 .progress-summary strong {
-  color: #17150d;
+  color: var(--text-color);
 }
 
 .date-range {
@@ -367,9 +430,9 @@ input {
   overflow: hidden;
   width: 100%;
   max-width: 980px;
-  border: 2px solid #17150d;
+  border: 2px solid var(--border-color);
   border-radius: 2px;
-  background: #fffdf4;
+  background: var(--surface-bg);
 }
 
 .progress-fill {
@@ -410,10 +473,10 @@ input {
 .todo-section {
   margin: 74px 0 0;
   padding: 22px 28px;
-  border: 2px solid #17150d;
+  border: 2px solid var(--border-color);
   border-top: 6px solid var(--accent-color);
   border-radius: 2px;
-  background: #fffdf4;
+  background: var(--surface-bg);
 }
 
 .section-header {
@@ -425,10 +488,10 @@ input {
 
 .todo-count {
   flex: 0 0 auto;
-  border: 2px solid #17150d;
+  border: 2px solid var(--border-color);
   border-radius: 2px;
-  background: #fffdf4;
-  color: #17150d;
+  background: var(--surface-bg);
+  color: var(--text-color);
   padding: 7px 10px;
   font-size: 1rem;
   font-weight: 800;
@@ -438,9 +501,9 @@ input {
   height: 18px;
   overflow: hidden;
   width: 100%;
-  border: 2px solid #17150d;
+  border: 2px solid var(--border-color);
   border-radius: 2px;
-  background: #fffdf4;
+  background: var(--surface-bg);
   margin: 18px 0;
 }
 
@@ -457,9 +520,9 @@ input {
 
 .todo-form button {
   min-width: 88px;
-  border: 2px solid #17150d;
-  background: #17150d;
-  color: #fffdf4;
+  border: 2px solid var(--border-color);
+  background: var(--primary-button-bg);
+  color: var(--primary-button-text);
   font-weight: 800;
 }
 
@@ -478,9 +541,9 @@ input {
   align-items: center;
   min-height: 58px;
   padding: 10px 12px;
-  border: 2px solid #17150d;
+  border: 2px solid var(--border-color);
   border-radius: 2px;
-  background: #fffdf4;
+  background: var(--surface-bg);
 }
 
 .todo-item label {
@@ -489,7 +552,7 @@ input {
   gap: 12px;
   align-items: center;
   min-width: 0;
-  color: #17150d;
+  color: var(--text-color);
   font-weight: 650;
   line-height: 1.35;
 }
@@ -497,7 +560,7 @@ input {
 .todo-item input {
   width: 18px;
   min-height: 18px;
-  accent-color: #17150d;
+  accent-color: var(--text-color);
 }
 
 .todo-item input:disabled {
@@ -510,15 +573,15 @@ input {
 }
 
 .todo-item .complete {
-  color: #17150d;
+  color: var(--text-color);
   text-decoration: line-through;
 }
 
 .ghost-button {
   min-height: 38px;
-  border: 2px solid #17150d;
-  background: #fffdf4;
-  color: #17150d;
+  border: 2px solid var(--border-color);
+  background: var(--surface-bg);
+  color: var(--text-color);
   padding: 0 12px;
   font-size: 0.96rem;
   font-weight: 800;
@@ -568,15 +631,25 @@ input {
   }
 
   .top-actions {
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     justify-content: end;
     justify-self: end;
-    max-width: 132px;
+    max-width: none;
   }
 
   .secondary-top-button {
     min-height: 40px;
     padding: 7px 12px;
+  }
+
+  .theme-toggle {
+    width: 42px;
+    min-width: 42px;
+    padding: 0;
+  }
+
+  .top-theme-toggle {
+    display: none;
   }
 
   .settings-dialog {
@@ -671,6 +744,15 @@ input {
 }
 
 @media (max-width: 380px) {
+  .top-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .top-actions {
+    justify-content: start;
+    justify-self: start;
+  }
+
   .todo-item,
   .todo-form {
     grid-template-columns: 1fr;

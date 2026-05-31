@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { Moon, Sun } from "lucide-react";
 
 type Todo = {
   id: string;
@@ -30,8 +31,11 @@ type AuthStatus = {
   isAuthenticated: boolean;
 };
 
+type Theme = "light" | "dark";
+
 const DEFAULT_EVENT_NAME = "Summer internship";
 const DEFAULT_ACCENT_COLOR = "#f4b400";
+const THEME_STORAGE_KEY = "time-tracker-theme";
 
 const DEFAULT_DATES: EventDates = {
   startDate: "2026-06-01",
@@ -119,6 +123,25 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
 
+function getInitialTheme(): Theme {
+  if (typeof window === "undefined") {
+    return "light";
+  }
+
+  try {
+    const savedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
+    if (savedTheme === "light" || savedTheme === "dark") {
+      return savedTheme;
+    }
+  } catch {
+    return "light";
+  }
+
+  return window.matchMedia?.("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+}
+
 function getEventEnd(value: string): Date {
   const end = parseLocalDate(value);
   end.setDate(end.getDate() + 1);
@@ -171,6 +194,7 @@ export default function App() {
   const [loginPassword, setLoginPassword] = useState("");
   const [loginError, setLoginError] = useState<string | null>(null);
   const [stateError, setStateError] = useState<string | null>(null);
+  const [theme, setTheme] = useState<Theme>(getInitialTheme);
 
   const { accentColor, dates, eventName, todos } = trackerState;
   const isInitialLoading = (isLoadingState || isLoadingAuth) && !stateError;
@@ -188,6 +212,15 @@ export default function App() {
     parseLocalDate(settingsDraft.endDate) <=
     parseLocalDate(settingsDraft.startDate);
   const isSettingsInvalid = isDraftDateRangeInvalid || isDraftAccentInvalid;
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    try {
+      window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+    } catch {
+      // Theme selection still applies for this session if storage is unavailable.
+    }
+  }, [theme]);
 
   useEffect(() => {
     let isMounted = true;
@@ -477,6 +510,24 @@ export default function App() {
               Login
             </button>
           )}
+          <button
+            className="secondary-top-button theme-toggle top-theme-toggle"
+            type="button"
+            onClick={() =>
+              setTheme((currentTheme) =>
+                currentTheme === "dark" ? "light" : "dark"
+              )
+            }
+            aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+            aria-pressed={theme === "dark"}
+            title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+          >
+            {theme === "dark" ? (
+              <Sun aria-hidden="true" size={22} strokeWidth={2.5} />
+            ) : (
+              <Moon aria-hidden="true" size={22} strokeWidth={2.5} />
+            )}
+          </button>
           {authStatus.requiresAuth && authStatus.isAuthenticated ? (
             <button className="secondary-top-button" type="button" onClick={logout}>
               Logout
@@ -547,6 +598,30 @@ export default function App() {
                   <p className="date-warning">Use a hex color like #f4b400.</p>
                 ) : null}
               </label>
+
+              <div className="settings-field">
+                <span>Theme</span>
+                <div className="theme-choice" role="group" aria-label="Theme">
+                  <button
+                    className={theme === "light" ? "active" : ""}
+                    type="button"
+                    onClick={() => setTheme("light")}
+                    aria-pressed={theme === "light"}
+                  >
+                    <Sun aria-hidden="true" size={20} strokeWidth={2.5} />
+                    Light
+                  </button>
+                  <button
+                    className={theme === "dark" ? "active" : ""}
+                    type="button"
+                    onClick={() => setTheme("dark")}
+                    aria-pressed={theme === "dark"}
+                  >
+                    <Moon aria-hidden="true" size={20} strokeWidth={2.5} />
+                    Dark
+                  </button>
+                </div>
+              </div>
 
               <div className="date-panel" aria-label="Event dates">
                 <div className="date-grid">
