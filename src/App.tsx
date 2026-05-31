@@ -25,6 +25,11 @@ type TrackerState = {
   todos: Todo[];
 };
 
+type AuthStatus = {
+  requiresAuth: boolean;
+  isAuthenticated: boolean;
+};
+
 const DEFAULT_EVENT_NAME = "Summer internship";
 const DEFAULT_ACCENT_COLOR = "#f4b400";
 
@@ -157,10 +162,19 @@ export default function App() {
   });
   const [now, setNow] = useState(() => new Date());
   const [isLoadingState, setIsLoadingState] = useState(true);
+  const [isLoadingAuth, setIsLoadingAuth] = useState(true);
+  const [authStatus, setAuthStatus] = useState<AuthStatus>({
+    requiresAuth: true,
+    isAuthenticated: false
+  });
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginError, setLoginError] = useState<string | null>(null);
   const [stateError, setStateError] = useState<string | null>(null);
 
   const { accentColor, dates, eventName, todos } = trackerState;
-  const isInitialLoading = isLoadingState && !stateError;
+  const isInitialLoading = (isLoadingState || isLoadingAuth) && !stateError;
+  const canEdit = !authStatus.requiresAuth || authStatus.isAuthenticated;
 
   const progress = useMemo(() => getProgress(dates, now), [dates, now]);
   const completedCount = todos.filter((todo) => todo.done).length;
@@ -177,6 +191,27 @@ export default function App() {
 
   useEffect(() => {
     let isMounted = true;
+
+    async function loadAuthStatus() {
+      try {
+        const response = await fetch("/api/auth/status");
+        if (!response.ok) {
+          throw new Error("Unable to load auth status.");
+        }
+
+        if (isMounted) {
+          setAuthStatus((await response.json()) as AuthStatus);
+        }
+      } catch {
+        if (isMounted) {
+          setStateError("Could not load login status.");
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingAuth(false);
+        }
+      }
+    }
 
     async function loadState() {
       try {
@@ -208,6 +243,7 @@ export default function App() {
       }
     }
 
+    void loadAuthStatus();
     void loadState();
 
     return () => {
@@ -224,6 +260,10 @@ export default function App() {
   }, []);
 
   async function saveTrackerState(nextState: TrackerState) {
+    if (!canEdit) {
+      return;
+    }
+
     setTrackerState(nextState);
     setStateError(null);
 
@@ -237,6 +277,13 @@ export default function App() {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          setAuthStatus({
+            requiresAuth: true,
+            isAuthenticated: false
+          });
+          setIsLoginOpen(true);
+        }
         throw new Error("Unable to save tracker state.");
       }
 
@@ -247,6 +294,11 @@ export default function App() {
   }
 
   function openSettings() {
+    if (!canEdit) {
+      setIsLoginOpen(true);
+      return;
+    }
+
     setSettingsDraft({ eventName, accentColor, ...dates });
     setIsSettingsOpen(true);
   }
@@ -257,7 +309,7 @@ export default function App() {
 
   function saveSettings(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (isSettingsInvalid) {
+    if (isSettingsInvalid || !canEdit) {
       return;
     }
 
@@ -275,6 +327,10 @@ export default function App() {
   }
 
   function resetAll() {
+    if (!canEdit) {
+      return;
+    }
+
     const confirmed = window.confirm(
       "Reset the tracker to defaults? This will clear your event settings and todos."
     );
@@ -294,6 +350,10 @@ export default function App() {
 
   function addTodo(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!canEdit) {
+      return;
+    }
+
     const title = newTodo.trim();
     if (!title) {
       return;
@@ -307,6 +367,10 @@ export default function App() {
   }
 
   function toggleTodo(id: string) {
+    if (!canEdit) {
+      return;
+    }
+
     void saveTrackerState({
       ...trackerState,
       todos: todos.map((todo) =>
@@ -316,10 +380,60 @@ export default function App() {
   }
 
   function deleteTodo(id: string) {
+    if (!canEdit) {
+      return;
+    }
+
     void saveTrackerState({
       ...trackerState,
       todos: todos.filter((todo) => todo.id !== id)
     });
+  }
+
+  async function login(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setLoginError(null);
+
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ password: loginPassword })
+      });
+
+      if (!response.ok) {
+        throw new Error("Incorrect password.");
+      }
+
+      const nextAuthStatus = (await response.json()) as AuthStatus;
+      setAuthStatus(nextAuthStatus);
+      setLoginPassword("");
+      setIsLoginOpen(false);
+      setStateError(null);
+    } catch {
+      setLoginError("Incorrect password.");
+    }
+  }
+
+  async function logout() {
+    try {
+      const response = await fetch("/api/auth/logout", {
+        method: "POST"
+      });
+
+      if (!response.ok) {
+        throw new Error("Unable to log out.");
+      }
+
+      setAuthStatus((await response.json()) as AuthStatus);
+      setIsSettingsOpen(false);
+      setLoginPassword("");
+      setLoginError(null);
+    } catch {
+      setStateError("Could not log out.");
+    }
   }
 
   if (isInitialLoading) {
@@ -342,9 +456,33 @@ export default function App() {
           <p className="eyebrow">{eventName}</p>
           <h1 id="page-title">Time Tracker</h1>
         </div>
-        <button className="settings-button" type="button" onClick={openSettings}>
-          Settings
-        </button>
+        <div className="top-actions">
+          {canEdit ? (
+            <button
+              className="settings-button"
+              type="button"
+              onClick={openSettings}
+            >
+              Settings
+            </button>
+          ) : (
+            <button
+              className="settings-button"
+              type="button"
+              onClick={() => {
+                setLoginError(null);
+                setIsLoginOpen(true);
+              }}
+            >
+              Login
+            </button>
+          )}
+          {authStatus.requiresAuth && authStatus.isAuthenticated ? (
+            <button className="secondary-top-button" type="button" onClick={logout}>
+              Logout
+            </button>
+          ) : null}
+        </div>
         {isSettingsOpen ? (
           <div
             className="settings-modal"
@@ -462,6 +600,63 @@ export default function App() {
             </form>
           </div>
         ) : null}
+        {isLoginOpen ? (
+          <div
+            className="auth-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="login-title"
+          >
+            <form className="auth-dialog" onSubmit={login}>
+              <div className="settings-header">
+                <div>
+                  <h2 id="login-title">Password required</h2>
+                </div>
+                <button
+                  className="close-button"
+                  type="button"
+                  onClick={() => {
+                    setIsLoginOpen(false);
+                    setLoginError(null);
+                  }}
+                  aria-label="Close login"
+                >
+                  X
+                </button>
+              </div>
+
+              <label className="settings-field">
+                <span>Password</span>
+                <input
+                  type="password"
+                  value={loginPassword}
+                  onChange={(event) => setLoginPassword(event.target.value)}
+                  autoFocus
+                />
+              </label>
+
+              {loginError ? (
+                <p className="login-error" role="status">
+                  {loginError}
+                </p>
+              ) : null}
+
+              <div className="settings-actions">
+                <button
+                  className="secondary-button"
+                  type="button"
+                  onClick={() => {
+                    setIsLoginOpen(false);
+                    setLoginError(null);
+                  }}
+                >
+                  Cancel
+                </button>
+                <button type="submit">Login</button>
+              </div>
+            </form>
+          </div>
+        ) : null}
       </header>
       {stateError ? (
         <div className="state-banner" role="status">
@@ -529,15 +724,17 @@ export default function App() {
           <div style={{ width: `${todoPercent}%` }} />
         </div>
 
-        <form className="todo-form" onSubmit={addTodo}>
-          <input
-            value={newTodo}
-            onChange={(event) => setNewTodo(event.target.value)}
-            placeholder="Add a goal, conversation, or task"
-            aria-label="New todo"
-          />
-          <button type="submit">Add</button>
-        </form>
+        {canEdit ? (
+          <form className="todo-form" onSubmit={addTodo}>
+            <input
+              value={newTodo}
+              onChange={(event) => setNewTodo(event.target.value)}
+              placeholder="Add a goal, conversation, or task"
+              aria-label="New todo"
+            />
+            <button type="submit">Add</button>
+          </form>
+        ) : null}
 
         <ul className="todo-list">
           {todos.map((todo) => (
@@ -546,20 +743,23 @@ export default function App() {
                 <input
                   type="checkbox"
                   checked={todo.done}
+                  disabled={!canEdit}
                   onChange={() => toggleTodo(todo.id)}
                 />
                 <span className={todo.done ? "complete" : ""}>
                   {todo.title}
                 </span>
               </label>
-              <button
-                className="ghost-button"
-                type="button"
-                onClick={() => deleteTodo(todo.id)}
-                aria-label={`Delete ${todo.title}`}
-              >
-                Delete
-              </button>
+              {canEdit ? (
+                <button
+                  className="ghost-button"
+                  type="button"
+                  onClick={() => deleteTodo(todo.id)}
+                  aria-label={`Delete ${todo.title}`}
+                >
+                  Delete
+                </button>
+              ) : null}
             </li>
           ))}
         </ul>

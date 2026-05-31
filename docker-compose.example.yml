@@ -5,6 +5,7 @@ services:
       - "4173:4173"
     environment:
       PREVIEW_ALLOWED_HOSTS: ${PREVIEW_ALLOWED_HOSTS:-}
+      TIME_TRACKER_PASSWORD: ${TIME_TRACKER_PASSWORD:-}
     volumes:
       - ./data:/app/data
     restart: unless-stopped

@@ -57,7 +57,7 @@ Build and run:
 ```sh
 mkdir -p data
 docker build -t time-tracker .
-docker run --rm -p 4173:4173 -v ./data:/app/data -e PREVIEW_ALLOWED_HOSTS=your.domain.example time-tracker
+docker run --rm -p 4173:4173 -v ./data:/app/data -e PREVIEW_ALLOWED_HOSTS=your.domain.example -e TIME_TRACKER_PASSWORD=change-me time-tracker
 ```
 
 Or use the compose example:
@@ -69,6 +69,8 @@ PREVIEW_ALLOWED_HOSTS=your.domain.example docker compose -f docker-compose.examp
 Server state is stored in `data/state.json` and persisted with the local `./data` bind mount.
 
 Set `PREVIEW_ALLOWED_HOSTS` to the hostname you use to access the app. For multiple hostnames, use a comma-separated list.
+
+Set `TIME_TRACKER_PASSWORD` to require a password before editing settings or todos. Leave it unset or empty to keep the app read/write by default.
 
 ## API
 

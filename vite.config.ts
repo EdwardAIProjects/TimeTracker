@@ -1,3 +1,4 @@
+import { randomBytes, timingSafeEqual } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { dirname, resolve } from "node:path";
@@ -23,6 +24,8 @@ type TrackerState = {
 
 const dataFile = resolve(process.cwd(), "data/state.json");
 const maxBodyBytes = 1_000_000;
+const authCookieName = "time_tracker_auth";
+const authToken = randomBytes(32).toString("base64url");
 
 const defaultState: TrackerState = {
   eventName: "Summer internship",
@@ -65,6 +68,75 @@ function isObject(value: unknown): value is Record<string, unknown> {
 
 function isValidHexColor(value: unknown): value is string {
   return typeof value === "string" && /^#[0-9a-fA-F]{6}$/.test(value);
+}
+
+function getAuthPassword(): string {
+  return process.env.TIME_TRACKER_PASSWORD?.trim() ?? "";
+}
+
+function isAuthEnabled(): boolean {
+  return getAuthPassword().length > 0;
+}
+
+function safeEquals(left: string, right: string): boolean {
+  const leftBuffer = Buffer.from(left);
+  const rightBuffer = Buffer.from(right);
+
+  return (
+    leftBuffer.length === rightBuffer.length &&
+    timingSafeEqual(leftBuffer, rightBuffer)
+  );
+}
+
+function parseCookies(cookieHeader: string | undefined): Record<string, string> {
+  if (!cookieHeader) {
+    return {};
+  }
+
+  return cookieHeader
+    .split(";")
+    .map((cookie) => cookie.trim())
+    .filter(Boolean)
+    .reduce<Record<string, string>>((cookies, cookie) => {
+      const separatorIndex = cookie.indexOf("=");
+      const name =
+        separatorIndex === -1 ? cookie : cookie.slice(0, separatorIndex);
+      const rawValue =
+        separatorIndex === -1 ? "" : cookie.slice(separatorIndex + 1);
+
+      try {
+        cookies[name] = decodeURIComponent(rawValue);
+      } catch {
+        cookies[name] = rawValue;
+      }
+
+      return cookies;
+    }, {});
+}
+
+function isAuthenticated(request: IncomingMessage): boolean {
+  if (!isAuthEnabled()) {
+    return true;
+  }
+
+  return parseCookies(request.headers.cookie)[authCookieName] === authToken;
+}
+
+function getAuthStatus(request: IncomingMessage) {
+  return {
+    requiresAuth: isAuthEnabled(),
+    isAuthenticated: isAuthenticated(request)
+  };
+}
+
+function getAuthCookie(value: string, maxAge: number): string {
+  return [
+    `${authCookieName}=${encodeURIComponent(value)}`,
+    "Path=/",
+    "HttpOnly",
+    "SameSite=Lax",
+    `Max-Age=${maxAge}`
+  ].join("; ");
 }
 
 function cleanString(value: unknown, fallback: string): string {
@@ -164,6 +236,11 @@ async function handleStateRequest(
   }
 
   if (request.method === "PUT") {
+    if (!isAuthenticated(request)) {
+      sendError(response, 401, "Login required");
+      return;
+    }
+
     try {
       const nextState = sanitizeState(JSON.parse(await readBody(request)));
       sendJson(response, 200, await writeState(nextState));
@@ -174,6 +251,75 @@ async function handleStateRequest(
   }
 
   sendError(response, 405, "Method not allowed");
+}
+
+async function handleAuthRequest(
+  request: IncomingMessage,
+  response: ServerResponse,
+  pathname: string
+): Promise<void> {
+  if (pathname === "/api/auth/status") {
+    if (request.method !== "GET") {
+      sendError(response, 405, "Method not allowed");
+      return;
+    }
+
+    sendJson(response, 200, getAuthStatus(request));
+    return;
+  }
+
+  if (pathname === "/api/auth/login") {
+    if (request.method !== "POST") {
+      sendError(response, 405, "Method not allowed");
+      return;
+    }
+
+    if (!isAuthEnabled()) {
+      sendJson(response, 200, getAuthStatus(request));
+      return;
+    }
+
+    try {
+      const payload = JSON.parse(await readBody(request)) as unknown;
+      const password =
+        isObject(payload) && typeof payload.password === "string"
+          ? payload.password
+          : "";
+
+      if (!safeEquals(password, getAuthPassword())) {
+        sendError(response, 401, "Incorrect password");
+        return;
+      }
+
+      response.setHeader(
+        "Set-Cookie",
+        getAuthCookie(authToken, 60 * 60 * 24 * 30)
+      );
+      sendJson(response, 200, {
+        requiresAuth: true,
+        isAuthenticated: true
+      });
+    } catch {
+      sendError(response, 400, "Invalid login payload");
+    }
+    return;
+  }
+
+  if (pathname === "/api/auth/logout") {
+    if (request.method !== "POST") {
+      sendError(response, 405, "Method not allowed");
+      return;
+    }
+
+    response.setHeader("Set-Cookie", getAuthCookie("", 0));
+    sendJson(response, 200, {
+      requiresAuth: isAuthEnabled(),
+      isAuthenticated: !isAuthEnabled()
+    });
+    return;
+  }
+
+  sendError(response, 404, "API route not found");
 }
 
 async function handleMobileRequest(
@@ -214,6 +360,11 @@ async function handleApiRequest(
   response: ServerResponse
 ): Promise<void> {
   const pathname = new URL(request.url ?? "/", "http://localhost").pathname;
+
+  if (pathname.startsWith("/api/auth/")) {
+    await handleAuthRequest(request, response, pathname);
+    return;
+  }
 
   if (pathname === "/api/state") {
     await handleStateRequest(request, response);
