@@ -322,7 +322,7 @@ async function handleAuthRequest(
   sendError(response, 404, "API route not found");
 }
 
-async function handleMobileRequest(
+async function handleReadOnlyRequest(
   request: IncomingMessage,
   response: ServerResponse,
   pathname: string
@@ -334,7 +334,7 @@ async function handleMobileRequest(
 
   const state = await readState();
 
-  if (pathname === "/api/mobile/events") {
+  if (pathname === "/api/events") {
     sendJson(response, 200, [
       {
         id: "main",
@@ -347,7 +347,7 @@ async function handleMobileRequest(
     return;
   }
 
-  if (pathname === "/api/mobile/todos") {
+  if (pathname === "/api/todos") {
     sendJson(response, 200, state.todos);
     return;
   }
@@ -371,8 +371,8 @@ async function handleApiRequest(
     return;
   }
 
-  if (pathname.startsWith("/api/mobile/")) {
-    await handleMobileRequest(request, response, pathname);
+  if (pathname === "/api/events" || pathname === "/api/todos") {
+    await handleReadOnlyRequest(request, response, pathname);
     return;
   }
 

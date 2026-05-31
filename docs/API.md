@@ -1,19 +1,18 @@
-# Mobile API
+# API
 
 Base URL:
 
 ```txt
-http://localhost:5173/api/mobile
+http://localhost:5173/api
 ```
 
 In production, use the same host as the web app:
 
 ```txt
-https://your.domain.example/api/mobile
+https://your.domain.example/api
 ```
 
-This API is read-only. It exposes just enough data for a mobile app to render
-the event list and todo list.
+This API is read-only. It exposes the event list and todo list.
 
 ## Endpoints
 
@@ -50,7 +49,7 @@ type Todo = {
 ## Tiny Client
 
 ```ts
-const API_URL = "https://your.domain.example/api/mobile";
+const API_URL = "https://your.domain.example/api";
 
 export async function getEvents() {
   const response = await fetch(`${API_URL}/events`);
