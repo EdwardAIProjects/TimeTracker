@@ -510,6 +510,15 @@ export default function App() {
               Login
             </button>
           )}
+          {authStatus.requiresAuth && authStatus.isAuthenticated ? (
+            <button
+              className="secondary-top-button logout-button"
+              type="button"
+              onClick={logout}
+            >
+              Logout
+            </button>
+          ) : null}
           <button
             className="secondary-top-button theme-toggle top-theme-toggle"
             type="button"
@@ -528,11 +537,6 @@ export default function App() {
               <Moon aria-hidden="true" size={22} strokeWidth={2.5} />
             )}
           </button>
-          {authStatus.requiresAuth && authStatus.isAuthenticated ? (
-            <button className="secondary-top-button" type="button" onClick={logout}>
-              Logout
-            </button>
-          ) : null}
         </div>
         {isSettingsOpen ? (
           <div
