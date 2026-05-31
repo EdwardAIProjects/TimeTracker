@@ -665,34 +665,37 @@ export default function App() {
                 </label>
               </div>
 
-              <div className="date-panel" aria-label="Event dates">
-                <div className="date-grid">
-                  <label>
-                    <span>Start</span>
-                    <input
-                      type="date"
-                      value={settingsDraft.startDate}
-                      onChange={(event) =>
-                        updateSettingsDraft("startDate", event.target.value)
-                      }
-                    />
-                  </label>
-                  <label>
-                    <span>End</span>
-                    <input
-                      type="date"
-                      value={settingsDraft.endDate}
-                      onChange={(event) =>
-                        updateSettingsDraft("endDate", event.target.value)
-                      }
-                    />
-                  </label>
+              <div className="settings-field">
+                <span>Start and end dates</span>
+                <div className="date-panel" aria-label="Event dates">
+                  <div className="date-grid">
+                    <label>
+                      <span>Start</span>
+                      <input
+                        type="date"
+                        value={settingsDraft.startDate}
+                        onChange={(event) =>
+                          updateSettingsDraft("startDate", event.target.value)
+                        }
+                      />
+                    </label>
+                    <label>
+                      <span>End</span>
+                      <input
+                        type="date"
+                        value={settingsDraft.endDate}
+                        onChange={(event) =>
+                          updateSettingsDraft("endDate", event.target.value)
+                        }
+                      />
+                    </label>
+                  </div>
+                  {isDraftDateRangeInvalid ? (
+                    <p className="date-warning">
+                      End date must be after start date.
+                    </p>
+                  ) : null}
                 </div>
-                {isDraftDateRangeInvalid ? (
-                  <p className="date-warning">
-                    End date must be after start date.
-                  </p>
-                ) : null}
               </div>
 
               <div className="settings-actions">
