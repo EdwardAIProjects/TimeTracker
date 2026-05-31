@@ -65,7 +65,7 @@ input:focus-visible {
 }
 
 .app-shell {
-  width: min(1040px, calc(100% - 32px));
+  width: min(1040px, calc(100% - clamp(48px, 8vw, 96px)));
   margin: 0 auto;
   padding: 40px 0 40px;
 }
@@ -217,7 +217,7 @@ h2 {
   display: grid;
   align-content: center;
   gap: 28px;
-  width: min(720px, calc(100% - 32px));
+  width: min(720px, calc(100% - clamp(48px, 8vw, 96px)));
   min-height: 100svh;
   margin: 0 auto;
   padding: 42px 0;
@@ -227,7 +227,7 @@ h2 {
   display: grid;
   align-content: center;
   gap: 28px;
-  width: min(560px, calc(100% - 32px));
+  width: min(560px, calc(100% - clamp(48px, 8vw, 96px)));
   min-height: 100svh;
   margin: 0 auto;
   padding: 42px 0;
@@ -608,7 +608,7 @@ input {
   }
 
   .app-shell {
-    width: min(100% - 28px, 1120px);
+    width: min(100% - 48px, 1120px);
     padding: 24px 0 32px;
   }
 
@@ -654,11 +654,13 @@ input {
 
   .settings-dialog {
     align-content: start;
+    width: min(720px, calc(100% - 48px));
     padding: 24px 0;
   }
 
   .auth-dialog {
     align-content: center;
+    width: min(560px, calc(100% - 48px));
     padding: 24px 0;
   }
 
