@@ -361,6 +361,16 @@ async function handleApiRequest(
 ): Promise<void> {
   const pathname = new URL(request.url ?? "/", "http://localhost").pathname;
 
+  if (pathname === "/api/health") {
+    if (request.method !== "GET") {
+      sendError(response, 405, "Method not allowed");
+      return;
+    }
+
+    sendJson(response, 200, { ok: true });
+    return;
+  }
+
   if (pathname.startsWith("/api/auth/")) {
     await handleAuthRequest(request, response, pathname);
     return;

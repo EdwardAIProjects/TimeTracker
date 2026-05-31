@@ -18,8 +18,17 @@ This API is read-only. It exposes the event list and todo list.
 
 | Method | Path | Response |
 | --- | --- | --- |
+| `GET` | `/health` | Health status |
 | `GET` | `/events` | Event summaries |
 | `GET` | `/todos` | Todo list |
+
+## Health Shape
+
+```ts
+type HealthStatus = {
+  ok: true;
+};
+```
 
 ## Event Shape
 
