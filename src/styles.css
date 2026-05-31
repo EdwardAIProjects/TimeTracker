@@ -603,7 +603,7 @@ input {
   }
 
   .progress-section {
-    gap: 36px;
+    gap: 42px;
   }
 
   .progress-summary {
@@ -622,7 +622,7 @@ input {
   }
 
   .date-range {
-    max-width: 16ch;
+    max-width: 30ch;
     line-height: 1.18;
   }
 
