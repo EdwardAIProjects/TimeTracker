@@ -786,6 +786,13 @@ export default function App() {
             </strong>
             <span className="metric-label">Days done</span>
           </article>
+          <article className="metric-card mobile-only-metric">
+            <strong className="stat-value">
+              <span>{numberFormatter.format(progress.elapsedDays / 7)}</span>
+              <small>/ {numberFormatter.format(progress.totalWeeks)}</small>
+            </strong>
+            <span className="metric-label">Weeks done</span>
+          </article>
         </div>
       </section>
 

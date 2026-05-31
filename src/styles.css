@@ -460,6 +460,10 @@ input {
   text-align: center;
 }
 
+.mobile-only-metric {
+  display: none;
+}
+
 .stat-value {
   gap: 6px;
   font-size: clamp(3.2rem, 8vw, 6.6rem);
@@ -723,8 +727,8 @@ input {
     padding: 0;
   }
 
-  .metric-card:last-child {
-    grid-column: 1 / -1;
+  .mobile-only-metric {
+    display: grid;
   }
 
   .stat-value {
