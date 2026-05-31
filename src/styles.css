@@ -593,8 +593,9 @@ input {
   }
 
   .metric-grid {
-    grid-template-columns: 1fr;
-    gap: 28px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: clamp(18px, 5vw, 44px);
+    row-gap: 28px;
   }
 
   .metric-card {
