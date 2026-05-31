@@ -137,9 +137,7 @@ function getInitialTheme(): Theme {
     return "light";
   }
 
-  return window.matchMedia?.("(prefers-color-scheme: dark)").matches
-    ? "dark"
-    : "light";
+  return "light";
 }
 
 function getEventEnd(value: string): Date {
