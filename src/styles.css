@@ -534,7 +534,7 @@ input {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   column-gap: clamp(44px, 8vw, 110px);
   row-gap: 34px;
-  padding: clamp(12px, 2.2svh, 24px) 0;
+  padding: clamp(6px, 1.2svh, 14px) 0;
 }
 
 .metric-card {
