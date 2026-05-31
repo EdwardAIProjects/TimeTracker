@@ -74,7 +74,7 @@ const DEFAULT_TODOS: Todo[] = [
 const DEFAULT_STATE: TrackerState = {
   eventName: DEFAULT_EVENT_NAME,
   accentColor: DEFAULT_ACCENT_COLOR,
-  showDateTimeBanner: true,
+  showDateTimeBanner: false,
   dates: DEFAULT_DATES,
   todos: DEFAULT_TODOS
 };

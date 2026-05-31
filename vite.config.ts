@@ -31,7 +31,7 @@ const authToken = randomBytes(32).toString("base64url");
 const defaultState: TrackerState = {
   eventName: "Summer internship",
   accentColor: "#f4b400",
-  showDateTimeBanner: true,
+  showDateTimeBanner: false,
   dates: {
     startDate: "2026-06-01",
     endDate: "2026-08-14"
