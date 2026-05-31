@@ -15,6 +15,7 @@ type Todo = {
 type TrackerState = {
   eventName: string;
   accentColor: string;
+  showDateTimeBanner: boolean;
   dates: {
     startDate: string;
     endDate: string;
@@ -30,6 +31,7 @@ const authToken = randomBytes(32).toString("base64url");
 const defaultState: TrackerState = {
   eventName: "Summer internship",
   accentColor: "#f4b400",
+  showDateTimeBanner: true,
   dates: {
     startDate: "2026-06-01",
     endDate: "2026-08-14"
@@ -156,6 +158,10 @@ function sanitizeState(value: unknown): TrackerState {
     accentColor: isValidHexColor(value.accentColor)
       ? value.accentColor
       : defaultState.accentColor,
+    showDateTimeBanner:
+      typeof value.showDateTimeBanner === "boolean"
+        ? value.showDateTimeBanner
+        : defaultState.showDateTimeBanner,
     dates: {
       startDate: cleanString(dates.startDate, defaultState.dates.startDate),
       endDate: cleanString(dates.endDate, defaultState.dates.endDate)

@@ -17,11 +17,13 @@ type EventDates = {
 type SettingsDraft = EventDates & {
   eventName: string;
   accentColor: string;
+  showDateTimeBanner: boolean;
 };
 
 type TrackerState = {
   eventName: string;
   accentColor: string;
+  showDateTimeBanner: boolean;
   dates: EventDates;
   todos: Todo[];
 };
@@ -72,6 +74,7 @@ const DEFAULT_TODOS: Todo[] = [
 const DEFAULT_STATE: TrackerState = {
   eventName: DEFAULT_EVENT_NAME,
   accentColor: DEFAULT_ACCENT_COLOR,
+  showDateTimeBanner: true,
   dates: DEFAULT_DATES,
   todos: DEFAULT_TODOS
 };
@@ -80,6 +83,15 @@ const dayFormatter = new Intl.DateTimeFormat(undefined, {
   month: "short",
   day: "numeric",
   year: "numeric"
+});
+
+const currentDateTimeFormatter = new Intl.DateTimeFormat(undefined, {
+  weekday: "long",
+  month: "long",
+  day: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+  second: "2-digit"
 });
 
 const numberFormatter = new Intl.NumberFormat(undefined, {
@@ -179,6 +191,7 @@ export default function App() {
   const [settingsDraft, setSettingsDraft] = useState<SettingsDraft>({
     eventName: DEFAULT_STATE.eventName,
     accentColor: DEFAULT_STATE.accentColor,
+    showDateTimeBanner: DEFAULT_STATE.showDateTimeBanner,
     ...DEFAULT_STATE.dates
   });
   const [now, setNow] = useState(() => new Date());
@@ -194,7 +207,8 @@ export default function App() {
   const [stateError, setStateError] = useState<string | null>(null);
   const [theme, setTheme] = useState<Theme>(getInitialTheme);
 
-  const { accentColor, dates, eventName, todos } = trackerState;
+  const { accentColor, dates, eventName, showDateTimeBanner, todos } =
+    trackerState;
   const isInitialLoading = (isLoadingState || isLoadingAuth) && !stateError;
   const canEdit = !authStatus.requiresAuth || authStatus.isAuthenticated;
 
@@ -260,6 +274,7 @@ export default function App() {
         setSettingsDraft({
           eventName: nextState.eventName,
           accentColor: nextState.accentColor,
+          showDateTimeBanner: nextState.showDateTimeBanner,
           ...nextState.dates
         });
         setStateError(null);
@@ -285,7 +300,7 @@ export default function App() {
   useEffect(() => {
     const timer = window.setInterval(() => {
       setNow(new Date());
-    }, 60_000);
+    }, 1_000);
 
     return () => window.clearInterval(timer);
   }, []);
@@ -330,11 +345,14 @@ export default function App() {
       return;
     }
 
-    setSettingsDraft({ eventName, accentColor, ...dates });
+    setSettingsDraft({ eventName, accentColor, showDateTimeBanner, ...dates });
     setIsSettingsOpen(true);
   }
 
-  function updateSettingsDraft(field: keyof SettingsDraft, value: string) {
+  function updateSettingsDraft<K extends keyof SettingsDraft>(
+    field: K,
+    value: SettingsDraft[K]
+  ) {
     setSettingsDraft({ ...settingsDraft, [field]: value });
   }
 
@@ -349,6 +367,7 @@ export default function App() {
       ...trackerState,
       eventName: nextEventName,
       accentColor: previewAccentColor,
+      showDateTimeBanner: settingsDraft.showDateTimeBanner,
       dates: {
         startDate: settingsDraft.startDate,
         endDate: settingsDraft.endDate
@@ -374,6 +393,7 @@ export default function App() {
     setSettingsDraft({
       eventName: DEFAULT_EVENT_NAME,
       accentColor: DEFAULT_ACCENT_COLOR,
+      showDateTimeBanner: DEFAULT_STATE.showDateTimeBanner,
       ...DEFAULT_DATES
     });
     setIsSettingsOpen(false);
@@ -479,7 +499,7 @@ export default function App() {
 
   return (
     <main
-      className="app-shell"
+      className={`app-shell ${showDateTimeBanner ? "" : "no-date-time-banner"}`}
       style={{ "--accent-color": accentColor } as CSSProperties}
     >
       <header className="top-bar">
@@ -625,6 +645,26 @@ export default function App() {
                 </div>
               </div>
 
+              <div className="settings-field">
+                <span>Date/time banner</span>
+                <label className="switch-setting">
+                  <span className="switch-copy">Show current day and time</span>
+                  <input
+                    type="checkbox"
+                    checked={settingsDraft.showDateTimeBanner}
+                    onChange={(event) =>
+                      updateSettingsDraft(
+                        "showDateTimeBanner",
+                        event.target.checked
+                      )
+                    }
+                  />
+                  <span className="switch-track" aria-hidden="true">
+                    <span className="switch-thumb" />
+                  </span>
+                </label>
+              </div>
+
               <div className="date-panel" aria-label="Event dates">
                 <div className="date-grid">
                   <label>
@@ -747,6 +787,11 @@ export default function App() {
         aria-label={`${eventName} progress`}
       >
         <div className="progress-summary">
+          {showDateTimeBanner ? (
+            <p className="current-date-time">
+              Today is {currentDateTimeFormatter.format(now)}
+            </p>
+          ) : null}
           <span className="metric-label">Progress through {eventName}</span>
           <strong className="progress-value">
             <span>{percentFormatter.format(progress.percent)}</span>
