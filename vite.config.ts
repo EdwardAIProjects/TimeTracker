@@ -1,4 +1,5 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
+import type { IncomingMessage, ServerResponse } from "node:http";
 import { dirname, resolve } from "node:path";
 import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
@@ -21,6 +22,7 @@ type TrackerState = {
 };
 
 const dataFile = resolve(process.cwd(), "data/state.json");
+const maxBodyBytes = 1_000_000;
 
 const defaultState: TrackerState = {
   eventName: "Summer internship",
@@ -107,16 +109,25 @@ async function readState(): Promise<TrackerState> {
   }
 }
 
-async function writeState(state: TrackerState): Promise<void> {
+async function writeState(state: TrackerState): Promise<TrackerState> {
+  const nextState = sanitizeState(state);
   await mkdir(dirname(dataFile), { recursive: true });
-  await writeFile(dataFile, `${JSON.stringify(state, null, 2)}\n`);
+  await writeFile(dataFile, `${JSON.stringify(nextState, null, 2)}\n`);
+  return nextState;
 }
 
-function readBody(request: import("node:http").IncomingMessage): Promise<string> {
+function readBody(request: IncomingMessage): Promise<string> {
   return new Promise((resolveBody, rejectBody) => {
     let body = "";
+    let bytes = 0;
 
     request.on("data", (chunk: Buffer) => {
+      bytes += chunk.length;
+      if (bytes > maxBodyBytes) {
+        rejectBody(new Error("Request body is too large."));
+        request.destroy();
+        return;
+      }
       body += chunk.toString();
     });
     request.on("end", () => resolveBody(body));
@@ -124,57 +135,120 @@ function readBody(request: import("node:http").IncomingMessage): Promise<string>
   });
 }
 
+function sendJson(
+  response: ServerResponse,
+  statusCode: number,
+  payload: unknown
+): void {
+  response.statusCode = statusCode;
+  response.setHeader("Content-Type", "application/json");
+  response.setHeader("Cache-Control", "no-store");
+  response.end(JSON.stringify(payload));
+}
+
+function sendError(
+  response: ServerResponse,
+  statusCode: number,
+  error: string
+): void {
+  sendJson(response, statusCode, { error });
+}
+
+async function handleStateRequest(
+  request: IncomingMessage,
+  response: ServerResponse
+): Promise<void> {
+  if (request.method === "GET") {
+    sendJson(response, 200, await readState());
+    return;
+  }
+
+  if (request.method === "PUT") {
+    try {
+      const nextState = sanitizeState(JSON.parse(await readBody(request)));
+      sendJson(response, 200, await writeState(nextState));
+    } catch {
+      sendError(response, 400, "Invalid state payload");
+    }
+    return;
+  }
+
+  sendError(response, 405, "Method not allowed");
+}
+
+async function handleMobileRequest(
+  request: IncomingMessage,
+  response: ServerResponse,
+  pathname: string
+): Promise<void> {
+  if (request.method !== "GET") {
+    sendError(response, 405, "Method not allowed");
+    return;
+  }
+
+  const state = await readState();
+
+  if (pathname === "/api/mobile/events") {
+    sendJson(response, 200, [
+      {
+        id: "main",
+        name: state.eventName,
+        accentColor: state.accentColor,
+        startDate: state.dates.startDate,
+        endDate: state.dates.endDate
+      }
+    ]);
+    return;
+  }
+
+  if (pathname === "/api/mobile/todos") {
+    sendJson(response, 200, state.todos);
+    return;
+  }
+
+  sendError(response, 404, "API route not found");
+}
+
+async function handleApiRequest(
+  request: IncomingMessage,
+  response: ServerResponse
+): Promise<void> {
+  const pathname = new URL(request.url ?? "/", "http://localhost").pathname;
+
+  if (pathname === "/api/state") {
+    await handleStateRequest(request, response);
+    return;
+  }
+
+  if (pathname.startsWith("/api/mobile/")) {
+    await handleMobileRequest(request, response, pathname);
+    return;
+  }
+
+  sendError(response, 404, "API route not found");
+}
+
 function stateApiPlugin(): Plugin {
   return {
     name: "tracker-state-api",
     configureServer(server) {
-      server.middlewares.use("/api/state", async (request, response) => {
-        response.setHeader("Content-Type", "application/json");
-
-        if (request.method === "GET") {
-          response.end(JSON.stringify(await readState()));
+      server.middlewares.use(async (request, response, next) => {
+        if (!request.url?.startsWith("/api/")) {
+          next();
           return;
         }
 
-        if (request.method === "PUT") {
-          try {
-            const nextState = sanitizeState(JSON.parse(await readBody(request)));
-            await writeState(nextState);
-            response.end(JSON.stringify(nextState));
-          } catch {
-            response.statusCode = 400;
-            response.end(JSON.stringify({ error: "Invalid state payload" }));
-          }
-          return;
-        }
-
-        response.statusCode = 405;
-        response.end(JSON.stringify({ error: "Method not allowed" }));
+        await handleApiRequest(request, response);
       });
     },
     configurePreviewServer(server) {
-      server.middlewares.use("/api/state", async (request, response) => {
-        response.setHeader("Content-Type", "application/json");
-
-        if (request.method === "GET") {
-          response.end(JSON.stringify(await readState()));
+      server.middlewares.use(async (request, response, next) => {
+        if (!request.url?.startsWith("/api/")) {
+          next();
           return;
         }
 
-        if (request.method === "PUT") {
-          try {
-            const nextState = sanitizeState(JSON.parse(await readBody(request)));
-            await writeState(nextState);
-            response.end(JSON.stringify(nextState));
-          } catch {
-            response.statusCode = 400;
-            response.end(JSON.stringify({ error: "Invalid state payload" }));
-          }
-          return;
-        }
-
-        response.statusCode = 405;
-        response.end(JSON.stringify({ error: "Method not allowed" }));
+        await handleApiRequest(request, response);
       });
     }
   };

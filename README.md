@@ -69,3 +69,9 @@ PREVIEW_ALLOWED_HOSTS=your.domain.example docker compose -f docker-compose.examp
 Server state is stored in `data/state.json` and persisted with the local `./data` bind mount.
 
 Set `PREVIEW_ALLOWED_HOSTS` to the hostname you use to access the app. For multiple hostnames, use a comma-separated list.
+
+## API
+
+The app includes a small read-only JSON API for a companion mobile app.
+
+See [docs/API.md](docs/API.md).
