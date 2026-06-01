@@ -152,6 +152,26 @@ function getInitialTheme(): Theme {
   return "light";
 }
 
+function getFaviconDataUrl(accentColor: string): string {
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+      <rect width="64" height="64" rx="12" fill="#fffdf4"/>
+      <text
+        x="32"
+        y="38"
+        fill="#17150d"
+        font-family="Arial, Helvetica, sans-serif"
+        font-size="30"
+        font-weight="900"
+        text-anchor="middle"
+      >TT</text>
+      <rect x="12" y="45" width="40" height="5" rx="1" fill="${accentColor}"/>
+    </svg>
+  `;
+
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
+
 function getEventEnd(value: string): Date {
   const end = parseLocalDate(value);
   end.setDate(end.getDate() + 1);
@@ -233,6 +253,17 @@ export default function App() {
       // Theme selection still applies for this session if storage is unavailable.
     }
   }, [theme]);
+
+  useEffect(() => {
+    const favicon =
+      document.querySelector<HTMLLinkElement>('link[rel="icon"]') ??
+      document.createElement("link");
+
+    favicon.rel = "icon";
+    favicon.type = "image/svg+xml";
+    favicon.href = getFaviconDataUrl(accentColor);
+    document.head.append(favicon);
+  }, [accentColor]);
 
   useEffect(() => {
     let isMounted = true;
