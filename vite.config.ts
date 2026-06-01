@@ -346,6 +346,7 @@ async function handleReadOnlyRequest(
         id: "main",
         name: state.eventName,
         accentColor: state.accentColor,
+        showDateTimeBanner: state.showDateTimeBanner,
         startDate: state.dates.startDate,
         endDate: state.dates.endDate
       }

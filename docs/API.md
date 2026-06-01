@@ -37,6 +37,7 @@ type EventSummary = {
   id: string;
   name: string;
   accentColor: string;
+  showDateTimeBanner: boolean;
   startDate: string;
   endDate: string;
 };
