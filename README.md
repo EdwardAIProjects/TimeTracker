@@ -76,4 +76,4 @@ Set `TIME_TRACKER_PASSWORD` to require a password before editing settings or tod
 
 The app includes a small read-only JSON API.
 
-See [docs/API.md](docs/API.md).
+See [API.md](API.md).
